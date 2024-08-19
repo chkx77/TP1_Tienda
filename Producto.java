@@ -1,6 +1,7 @@
 package TP1;
 
 import java.util.Objects;
+import java.util.Set;
 
 
 //====Clase padre Producto====
@@ -80,10 +81,17 @@ class Envasado extends Producto {
 
     public Envasado(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia, String tipoEnvase, boolean esImportado, int calorias) {
         super(descripcion, stock, precioPorUnidad, porcentajeGanancia);
+        validarGanancia();
         this.tipoEnvase = Objects.requireNonNull(tipoEnvase, "Tipo de envase no puede ser nulo");
         this.esImportado = esImportado;
         this.calorias = calorias;
         this.id = generarId();
+    }
+
+    private void validarGanancia() {
+        if (getPorcentajeGanancia() > 20) {
+            throw new IllegalArgumentException("El porcentaje de ganancia para productos envasados no puede superar el 20%.");
+        }
     }
 
     private String generarId() {
@@ -139,10 +147,17 @@ class Bebida extends Producto {
 
     public Bebida(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia, double graduacionAlcoholica, boolean esImportado) {
         super(descripcion, stock, precioPorUnidad, porcentajeGanancia);
+        validarGanancia();
         this.graduacionAlcoholica = graduacionAlcoholica;
         this.esImportado = esImportado;
         this.calorias = calcularCalorias();
         this.id = generarId();
+    }
+
+    private void validarGanancia() {
+        if (getPorcentajeGanancia() > 20) {
+            throw new IllegalArgumentException("El porcentaje de ganancia para bebidas no puede superar el 20%.");
+        }
     }
 
     private String generarId() {
@@ -198,16 +213,29 @@ class Bebida extends Producto {
     }
 }
 
-//====SubClase Productos de Limpieza====
 
+//====SubClase Productos de Limpieza====
 class Limpieza extends Producto {
     private static int contador = 0;
     private String tipoAplicacion;
+    private static final Set<String> TIPOS_VALIDOS = Set.of("COCINA", "BAÑO", "ROPA", "MULTIUSO");
 
     public Limpieza(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia, String tipoAplicacion) {
         super(descripcion, stock, precioPorUnidad, porcentajeGanancia);
-        this.tipoAplicacion = Objects.requireNonNull(tipoAplicacion, "Tipo de aplicación no puede ser nulo");
+        setTipoAplicacion(tipoAplicacion); // Usar el setter para validar el tipo
+        validarGanancia(); // Mover validación después de establecer tipoAplicacion
         this.id = generarId();
+    }
+
+    private void validarGanancia() {
+        if (TIPOS_VALIDOS.contains(tipoAplicacion)) {
+            if (tipoAplicacion.equals("COCINA") || tipoAplicacion.equals("MULTIUSO")) {
+                return; // No hay límite mínimo para COCINA y MULTIUSO
+            }
+        }
+        if (getPorcentajeGanancia() < 10 || getPorcentajeGanancia() > 25) {
+            throw new IllegalArgumentException("El porcentaje de ganancia para productos de limpieza debe estar entre el 10% y el 25%, salvo que sean de tipo COCINA o MULTIUSO.");
+        }
     }
 
     private String generarId() {
@@ -221,7 +249,11 @@ class Limpieza extends Producto {
     }
 
     public void setTipoAplicacion(String tipoAplicacion) {
-        this.tipoAplicacion = tipoAplicacion;
+        if (TIPOS_VALIDOS.contains(tipoAplicacion.toUpperCase())) {
+            this.tipoAplicacion = tipoAplicacion.toUpperCase();
+        } else {
+            throw new IllegalArgumentException("Tipo de aplicación no válido. Debe ser uno de los siguientes: COCINA, BAÑO, ROPA, MULTIUSO.");
+        }
     }
 
     @Override
@@ -234,4 +266,5 @@ class Limpieza extends Producto {
         );
     }
 }
+
 
