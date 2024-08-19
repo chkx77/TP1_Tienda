@@ -8,12 +8,20 @@ public class Tienda {
     private int maximoStock;
     private double saldoEnCaja;
     private List<Producto> productosEnStock;
+    private List<Producto> listaEnvasados;
+    private List<Producto> listaBebidas;
+    private List<Producto> listaLimpieza;
 
     public Tienda(String nombre, int maximoStock, double saldoEnCaja) {
         this.nombre = nombre;
         this.maximoStock = maximoStock;
         this.saldoEnCaja = saldoEnCaja;
-        this.productosEnStock = new ArrayList<>(); // ==== Inicialización de la lista ====
+        this.productosEnStock = new ArrayList<>();
+        this.productosEnStock = new ArrayList<>();
+        this.listaEnvasados = new ArrayList<>();
+        this.listaBebidas = new ArrayList<>();
+        this.listaLimpieza = new ArrayList<>();
+        // ==== Inicialización de la lista ====
     }
 
     @Override
@@ -59,26 +67,26 @@ public class Tienda {
     public void comprarProducto(Producto item, int cantidadAComprar) {
         boolean productoExistente = false;
 
-        // ==== Verificar si el producto ya está en stock ====
+        // Verificar si el producto ya está en stock
         for (Producto productoEnStock : productosEnStock) {
             if (productoEnStock.getDescripcion().equals(item.getDescripcion())) {
                 productoExistente = true;
                 int nuevoStock = productoEnStock.getStock() + cantidadAComprar;
 
-                // ==== Verificar si el nuevo stock excede el máximo permitido ====
+                // Verificar si el nuevo stock excede el máximo permitido
                 if (nuevoStock > maximoStock) {
                     System.out.println("No se puede agregar más de este producto porque se excede el stock máximo permitido.");
                     return;
                 }
 
-                // ==== Verificar si hay suficiente saldo en caja ====
+                // Verificar si hay suficiente saldo en caja
                 double costoTotal = cantidadAComprar * item.getPrecioPorUnidad();
                 if (saldoEnCaja < costoTotal) {
                     System.out.println("El producto no podrá ser agregado a la tienda por saldo insuficiente en la caja");
                     return;
                 }
 
-                // ==== Actualizar el stock y el saldo en caja ====
+                // Actualizar el stock y el saldo en caja
                 productoEnStock.setStock(nuevoStock);
                 saldoEnCaja -= costoTotal;
                 System.out.println("Producto existente actualizado con éxito.");
@@ -86,26 +94,35 @@ public class Tienda {
             }
         }
 
-        // ==== Si el producto no existe en el stock, agregarlo como nuevo ====
+        // Si el producto no existe en el stock, agregarlo como nuevo
         int cantidadActualEnStock = productosEnStock.stream().mapToInt(Producto::getStock).sum();
 
-        // ==== Verificar si agregar nuevos productos excede el máximo stock ====
+        // Verificar si agregar nuevos productos excede el máximo stock
         if (cantidadActualEnStock + cantidadAComprar > maximoStock) {
             System.out.println("No se pueden agregar nuevos productos a la tienda ya que se alcanzó el máximo de stock");
             return;
         }
 
-        // ==== Verificar si hay suficiente saldo en caja ====
+        // Verificar si hay suficiente saldo en caja
         double costoTotal = cantidadAComprar * item.getPrecioPorUnidad();
         if (saldoEnCaja < costoTotal) {
             System.out.println("El producto no podrá ser agregado a la tienda por saldo insuficiente en la caja");
             return;
         }
 
-        // ==== Agregar el producto al stock y descontar el saldo ====
+        if (item instanceof Envasado) {
+            listaEnvasados.add(item);
+        } else if (item instanceof Bebida) {
+            listaBebidas.add(item);
+        } else if (item instanceof Limpieza) {
+            listaLimpieza.add(item);
+        }
+
+        // Agregar el producto al stock y descontar el saldo
         item.setStock(cantidadAComprar);
         productosEnStock.add(item);
         saldoEnCaja -= costoTotal;
         System.out.println("Producto agregado con éxito.");
     }
+
 }
