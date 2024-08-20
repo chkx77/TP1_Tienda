@@ -17,24 +17,24 @@ public class Tienda {
         this.maximoStock = maximoStock;
         this.saldoEnCaja = saldoEnCaja;
         this.productosEnStock = new ArrayList<>();
-        this.productosEnStock = new ArrayList<>();
         this.listaEnvasados = new ArrayList<>();
         this.listaBebidas = new ArrayList<>();
         this.listaLimpieza = new ArrayList<>();
-        // ==== Inicialización de la lista ====
     }
 
     @Override
     public String toString() {
-        String resultado = "===== Tienda =====\n";
-        resultado += "Nombre: " + nombre + "\n";
-        resultado += "Máximo Stock Permitido: " + maximoStock + " productos\n";
-        resultado += "Saldo en Caja: $" + String.format("%.2f", saldoEnCaja) + "\n";
-        resultado += "==================\n";
-        return resultado;
+        return String.format(
+                "===== Tienda =====\n" +
+                        "Nombre: %s\n" +
+                        "Máximo Stock Permitido: %d productos\n" +
+                        "Saldo en Caja: $%.2f\n" +
+                        "==================\n",
+                nombre, maximoStock, saldoEnCaja
+        );
     }
 
-    // ==== Getters y setters ====
+    // Getters y Setters
     public String getNombre() {
         return nombre;
     }
@@ -63,7 +63,7 @@ public class Tienda {
         return productosEnStock;
     }
 
-    // ==== Método para comprar un item y añadirlo al stock ====
+    // Método para comprar un item y añadirlo al stock
     public void comprarProducto(Producto item, int cantidadAComprar) {
         boolean productoExistente = false;
 
@@ -82,7 +82,7 @@ public class Tienda {
                 // Verificar si hay suficiente saldo en caja
                 double costoTotal = cantidadAComprar * item.getPrecioPorUnidad();
                 if (saldoEnCaja < costoTotal) {
-                    System.out.println("El producto no podrá ser agregado a la tienda por saldo insuficiente en la caja");
+                    System.out.println("El producto no podrá ser agregado a la tienda por saldo insuficiente en la caja.");
                     return;
                 }
 
@@ -99,17 +99,18 @@ public class Tienda {
 
         // Verificar si agregar nuevos productos excede el máximo stock
         if (cantidadActualEnStock + cantidadAComprar > maximoStock) {
-            System.out.println("No se pueden agregar nuevos productos a la tienda ya que se alcanzó el máximo de stock");
+            System.out.println("No se pueden agregar nuevos productos a la tienda ya que se alcanzó el máximo de stock.");
             return;
         }
 
         // Verificar si hay suficiente saldo en caja
         double costoTotal = cantidadAComprar * item.getPrecioPorUnidad();
         if (saldoEnCaja < costoTotal) {
-            System.out.println("El producto no podrá ser agregado a la tienda por saldo insuficiente en la caja");
+            System.out.println("El producto no podrá ser agregado a la tienda por saldo insuficiente en la caja.");
             return;
         }
 
+        // Clasificar y agregar el producto
         if (item instanceof Envasado) {
             listaEnvasados.add(item);
         } else if (item instanceof Bebida) {
@@ -125,4 +126,70 @@ public class Tienda {
         System.out.println("Producto agregado con éxito.");
     }
 
+    // Método para vender productos
+    public void venderProductos(List<Producto> productosAComprar, List<Integer> cantidades) {
+        if (productosAComprar.size() > 3) {
+            System.out.println("No se pueden incluir más de 3 productos en una venta.");
+            return;
+        }
+
+        double totalVenta = 0;
+        boolean stockMenorAlSolicitado = false;
+        boolean productoNoDisponible = false;
+
+        System.out.println("==========================================");
+        System.out.println("               DETALLE DE VENTA           ");
+        System.out.println("==========================================");
+        for (int i = 0; i < productosAComprar.size(); i++) {
+            Producto producto = productosAComprar.get(i);
+            int cantidad = cantidades.get(i);
+
+            if (cantidad > 12) {
+                System.out.println("No se pueden vender más de 12 unidades de un mismo producto.");
+                continue;
+            }
+
+            if (!producto.isDisponible()) {
+                System.out.printf("El producto %s %s no se encuentra disponible.%n", producto.getId(), producto.getDescripcion());
+                productoNoDisponible = true;
+                continue;
+            }
+
+            if (producto.getStock() < cantidad) {
+                System.out.printf("Hay productos con stock disponible menor al solicitado para %s %s. Solo se venderán %d unidades.%n",
+                        producto.getId(), producto.getDescripcion(), producto.getStock());
+                cantidad = producto.getStock();
+                stockMenorAlSolicitado = true;
+                producto.setDisponible(false); // Si no hay stock, lo hacemos no disponible
+            }
+
+            double precioVenta = producto.getPrecioPorUnidad() * (1 + producto.getPorcentajeGanancia() / 100);
+            double subtotal = precioVenta * cantidad;
+            totalVenta += subtotal;
+
+            // Descontar la cantidad vendida del stock
+            producto.setStock(producto.getStock() - cantidad);
+
+            System.out.printf("%s %s %d x $%.2f = $%.2f%n", producto.getId(), producto.getDescripcion(), cantidad, precioVenta, subtotal);
+            System.out.println("-------------------------------------");
+
+            // Verificar si después de la venta ya no hay más stock y cambiar disponibilidad
+            if (producto.getStock() == 0) {
+                producto.setDisponible(false);
+            }
+        }
+
+        // Actualizar el saldo en caja con el total de la venta
+        saldoEnCaja += totalVenta;
+        System.out.println("-------------------------------------");
+        System.out.printf("TOTAL VENTA: $%.2f%n", totalVenta);
+
+        if (stockMenorAlSolicitado) {
+            System.out.println("Hay productos con stock disponible menor al solicitado.");
+        }
+
+        if (productoNoDisponible) {
+            System.out.println("Uno o más productos no se encuentran disponibles y no se incluyeron en la venta.");
+        }
+    }
 }
