@@ -1,11 +1,12 @@
 package TP1;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
 
-
 //====Clase padre Producto====
-
 abstract class Producto {
     protected String id;
     protected String descripcion;
@@ -72,19 +73,21 @@ abstract class Producto {
 }
 
 //====SubClase Envasados====
-
 class Envasado extends Producto {
     private static int contador = 0;
     private String tipoEnvase;
     private boolean esImportado;
     private int calorias;
+    private Date fechaVencimiento;
 
-    public Envasado(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia, String tipoEnvase, boolean esImportado, int calorias) {
+    public Envasado(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia,
+                    String tipoEnvase, boolean esImportado, int calorias, String fechaVencimiento) {
         super(descripcion, stock, precioPorUnidad, porcentajeGanancia);
         validarGanancia();
         this.tipoEnvase = Objects.requireNonNull(tipoEnvase, "Tipo de envase no puede ser nulo");
         this.esImportado = esImportado;
         this.calorias = calorias;
+        this.fechaVencimiento = convertirFecha(fechaVencimiento);
         this.id = generarId();
     }
 
@@ -97,6 +100,15 @@ class Envasado extends Producto {
     private String generarId() {
         contador++;
         return String.format("AB%03d", contador);
+    }
+
+    private Date convertirFecha(String fechaStr) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/yyyy");
+        try {
+            return sdf.parse(fechaStr);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("Formato de fecha inválido. Debe ser MM/yyyy.");
+        }
     }
 
     // Getters y Setters
@@ -124,33 +136,45 @@ class Envasado extends Producto {
         this.calorias = calorias;
     }
 
+    public Date getFechaVencimiento() {
+        return fechaVencimiento;
+    }
+
+    public void setFechaVencimiento(String fechaVencimiento) {
+        this.fechaVencimiento = convertirFecha(fechaVencimiento);
+    }
+
     @Override
     public String toString() {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/yyyy");
         return String.format(
                 "%s\n" +
                         "Tipo de Envase: %s\n" +
                         "Importado: %b\n" +
                         "Calorías: %d\n" +
+                        "Fecha de Vencimiento: %s\n" +
                         "-----------------------------",
-                super.toString(), tipoEnvase, esImportado, calorias
+                super.toString(), tipoEnvase, esImportado, calorias, sdf.format(fechaVencimiento)
         );
     }
 }
 
 //====SubClase Bebidas====
-
 class Bebida extends Producto {
     private static int contador = 0;
     private double graduacionAlcoholica;
     private boolean esImportado;
-    private double calorias; // Atributo para las calorías
+    private double calorias;
+    private Date fechaVencimiento;
 
-    public Bebida(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia, double graduacionAlcoholica, boolean esImportado) {
+    public Bebida(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia,
+                  double graduacionAlcoholica, boolean esImportado, double calorias, String fechaVencimiento) {
         super(descripcion, stock, precioPorUnidad, porcentajeGanancia);
         validarGanancia();
         this.graduacionAlcoholica = graduacionAlcoholica;
         this.esImportado = esImportado;
-        this.calorias = calcularCalorias();
+        this.calorias = ajustarCalorias(calorias);
+        this.fechaVencimiento = convertirFecha(fechaVencimiento);
         this.id = generarId();
     }
 
@@ -165,13 +189,22 @@ class Bebida extends Producto {
         return String.format("AC%03d", contador);
     }
 
-    private double calcularCalorias() {
+    private double ajustarCalorias(double caloriasIngresadas) {
         if (graduacionAlcoholica <= 2) {
-            return graduacionAlcoholica;
+            return caloriasIngresadas;
         } else if (graduacionAlcoholica <= 4.5) {
-            return graduacionAlcoholica * 1.25;
+            return caloriasIngresadas * 1.25;
         } else {
-            return graduacionAlcoholica * 1.5;
+            return caloriasIngresadas * 1.5;
+        }
+    }
+
+    private Date convertirFecha(String fechaStr) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/yyyy");
+        try {
+            return sdf.parse(fechaStr);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("Formato de fecha inválido. Debe ser MM/yyyy.");
         }
     }
 
@@ -182,6 +215,7 @@ class Bebida extends Producto {
 
     public void setGraduacionAlcoholica(double graduacionAlcoholica) {
         this.graduacionAlcoholica = graduacionAlcoholica;
+        this.calorias = ajustarCalorias(this.calorias);
     }
 
     public boolean isEsImportado() {
@@ -197,22 +231,31 @@ class Bebida extends Producto {
     }
 
     public void setCalorias(double calorias) {
-        this.calorias = calorias;
+        this.calorias = ajustarCalorias(calorias);
+    }
+
+    public Date getFechaVencimiento() {
+        return fechaVencimiento;
+    }
+
+    public void setFechaVencimiento(String fechaVencimiento) {
+        this.fechaVencimiento = convertirFecha(fechaVencimiento);
     }
 
     @Override
     public String toString() {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/yyyy");
         return String.format(
                 "%s\n" +
                         "Graduación Alcohólica: %.2f%%\n" +
                         "Importado: %b\n" +
                         "Calorías: %.2f\n" +
+                        "Fecha de Vencimiento: %s\n" +
                         "-----------------------------",
-                super.toString(), graduacionAlcoholica, esImportado, calorias
+                super.toString(), graduacionAlcoholica, esImportado, calorias, sdf.format(fechaVencimiento)
         );
     }
 }
-
 
 //====SubClase Productos de Limpieza====
 class Limpieza extends Producto {
@@ -222,15 +265,15 @@ class Limpieza extends Producto {
 
     public Limpieza(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia, String tipoAplicacion) {
         super(descripcion, stock, precioPorUnidad, porcentajeGanancia);
-        setTipoAplicacion(tipoAplicacion); // Usar el setter para validar el tipo
-        validarGanancia(); // Mover validación después de establecer tipoAplicacion
+        setTipoAplicacion(tipoAplicacion);
+        validarGanancia();
         this.id = generarId();
     }
 
     private void validarGanancia() {
         if (TIPOS_VALIDOS.contains(tipoAplicacion)) {
             if (tipoAplicacion.equals("COCINA") || tipoAplicacion.equals("MULTIUSO")) {
-                return; // No hay límite mínimo para COCINA y MULTIUSO
+                return;
             }
         }
         if (getPorcentajeGanancia() < 10 || getPorcentajeGanancia() > 25) {
@@ -252,7 +295,7 @@ class Limpieza extends Producto {
         if (TIPOS_VALIDOS.contains(tipoAplicacion.toUpperCase())) {
             this.tipoAplicacion = tipoAplicacion.toUpperCase();
         } else {
-            throw new IllegalArgumentException("Tipo de aplicación no válido. Debe ser uno de los siguientes: COCINA, BAÑO, ROPA, MULTIUSO.");
+            throw new IllegalArgumentException("Tipo de aplicación no válido. Debe ser COCINA, BAÑO, ROPA o MULTIUSO.");
         }
     }
 
@@ -264,6 +307,9 @@ class Limpieza extends Producto {
                         "-----------------------------",
                 super.toString(), tipoAplicacion
         );
+    }
+}
+
     }
 }
 
