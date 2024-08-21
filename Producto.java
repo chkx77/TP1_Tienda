@@ -96,7 +96,7 @@ abstract class Producto {
     }
 }
 
-//====SubClase Envasados====
+                                                    //====SubClase Envasados====
 class Envasado extends Producto {
     private static int contador = 0;
     private String tipoEnvase;
@@ -191,7 +191,7 @@ class Envasado extends Producto {
     }
 }
 
-//====SubClase Bebidas====
+                                                    //====SubClase Bebidas====
 class Bebida extends Producto {
     private static int contador = 0;
     private double graduacionAlcoholica;
@@ -228,6 +228,7 @@ class Bebida extends Producto {
         contador++;
         return String.format("AC%03d", contador);
     }
+
 
     private double ajustarCalorias(double caloriasIngresadas) {
         if (graduacionAlcoholica <= 2) {
@@ -297,7 +298,7 @@ class Bebida extends Producto {
     }
 }
 
-//====SubClase Limpieza====
+                                                    //====SubClase Limpieza====
 class Limpieza extends Producto {
     private static int contador = 0;
     private String tipoAplicacion;
