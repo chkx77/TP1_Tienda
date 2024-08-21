@@ -1,7 +1,9 @@
 package TP1;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /* En esta clase "Tienda", soy consciente de que estoy asignandole muchas responsabilidades.
    Sé que esto puede complicar la escalabilidad y el mantenimiento del código.
@@ -36,6 +38,7 @@ public class Tienda {
         this.listaEnvasados = new ArrayList<>();
         this.listaBebidas = new ArrayList<>();
         this.listaLimpieza = new ArrayList<>();
+
     }
 
     @Override
@@ -79,8 +82,8 @@ public class Tienda {
         return productosEnStock;
     }
 
-                                          // =====Método para comprar un item====
-    
+                                          // =====Metodo para comprar un item====
+
     public void comprarProducto(Producto item, int cantidadAComprar) {
         boolean productoExistente = false;
 
@@ -143,8 +146,8 @@ public class Tienda {
         System.out.println("Producto agregado con éxito.");
     }
 
-                                    // =====Método para vender productos====
-    
+                                    // =====Metodo para vender productos====
+
     public void venderProductos(List<Producto> productosAComprar, List<Integer> cantidades) {
         if (productosAComprar.size() > 3) {
             System.out.println("No se pueden incluir más de 3 productos en una venta.");
@@ -227,6 +230,31 @@ public class Tienda {
         if (productoNoDisponible) {
             System.out.println("Uno o más productos no se encuentran disponibles y no se incluyeron en la venta.");
         }
+    }
+
+    public List<String> obtenerComestiblesConMenorDescuento(int porcentajeDescuento) {
+        // Creo una lista para almacenar los productos filtrados
+        List<Producto> productosFiltrados = new ArrayList<>();
+
+        // Filrto y agrego productos de la listaEnvasados
+        productosFiltrados.addAll(
+                listaEnvasados.stream()
+                        .filter(p -> p instanceof Envasado && !((Envasado) p).isEsImportado() && ((Envasado) p).getDescuento() < porcentajeDescuento)
+                        .collect(Collectors.toList())
+        );
+
+        // Filtro y agrego productos de la listaBebidas
+        productosFiltrados.addAll(
+                listaBebidas.stream()
+                        .filter(p -> p instanceof Bebida && !((Bebida) p).isEsImportado() && ((Bebida) p).getDescuento() < porcentajeDescuento)
+                        .collect(Collectors.toList())
+        );
+
+        // Ordeno los productos por precio y convierto descripciones a mayúsculas
+        return productosFiltrados.stream()
+                .sorted(Comparator.comparingDouble(Producto::getPrecioPorUnidad)) // Ordenar por precio
+                .map(p -> p.getDescripcion().toUpperCase()) // Convertir a mayúsculas
+                .collect(Collectors.toList()); // Recoger en una lista
     }
 
 }
