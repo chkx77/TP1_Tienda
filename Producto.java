@@ -114,7 +114,15 @@ class Envasado extends Producto {
         this.esImportado = esImportado;
         this.calorias = calorias;
         this.fechaVencimiento = convertirFecha(fechaVencimiento);
+        validarFechaVencimiento(this.fechaVencimiento);
         this.id = generarId();
+    }
+
+    private void validarFechaVencimiento(Date fechaVencimiento) {
+        Date fechaActual = new Date();
+        if (fechaVencimiento.before(fechaActual)) {
+            throw new IllegalArgumentException("La fecha de vencimiento debe ser posterior a la fecha actual.");
+        }
     }
 
     private void validarDescuento(double descuento) {
@@ -209,7 +217,15 @@ class Bebida extends Producto {
         this.esImportado = esImportado;
         this.calorias = ajustarCalorias(calorias);
         this.fechaVencimiento = convertirFecha(fechaVencimiento);
+        validarFechaVencimiento(this.fechaVencimiento);
         this.id = generarId();
+    }
+
+    private void validarFechaVencimiento(Date fechaVencimiento) {
+        Date fechaActual = new Date();
+        if (fechaVencimiento.before(fechaActual)) {
+            throw new IllegalArgumentException("La fecha de vencimiento debe ser posterior a la fecha actual.");
+        }
     }
 
     private void validarDescuento(double descuento) {
@@ -343,6 +359,10 @@ class Limpieza extends Producto {
         this.tipoAplicacion = tipoAplicacion;
     }
 
+
+
+
+
     @Override
     public String toString() {
         return String.format(
@@ -352,4 +372,7 @@ class Limpieza extends Producto {
                 super.toString(), tipoAplicacion
         );
     }
+
+
+
 }
