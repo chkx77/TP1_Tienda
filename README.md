@@ -1,6 +1,5 @@
 TP - 1
 
-Clase Producto();
 El sistema de gestión de productos para una tienda está compuesto por una clase padre: Producto, y tres clases hijas: Envasado, Bebida, y Limpieza. Estas clases permiten representar y gestionar distintos tipos de productos en una tienda, cada uno con atributos y comportamientos específicos. El objetivo es mantener la lógica centralizada en la clase Tienda, aunque esto ha llevado a una sobrecarga de responsabilidades que puede ser revisada en versiones futuras.
 
 Clase Producto
@@ -20,7 +19,7 @@ Subclase Limpieza
 Finalmente, Limpieza también extiende Producto, añadiendo el atributo tipoAplicacion y utilizando un conjunto estático para validar los tipos de aplicación permitidos. El identificador es generado con un contador estático y se asegura que el descuento no sea mayor al 20%. La clase valida que el tipo de aplicación esté en el conjunto de tipos válidos y ajusta el formato de salida para reflejar estos detalles.
 
 
-Clase Tienda();
+Clase Tienda:
 
 La clase Tienda gestiona los productos en una tienda, incluyendo operaciones de compra, venta y filtrado de productos. Aunque esta clase centraliza muchas responsabilidades, se reconoce que una estructura más modular podría mejorar la escalabilidad y el mantenimiento del código. Para el manejo de productos, se utilizan listas específicas para cada tipo: listaEnvasados, listaBebidas, y listaLimpieza. El saldo en caja y el máximo stock permitido también se gestionan dentro de la clase.
 
@@ -37,5 +36,3 @@ comprarProducto: Este método maneja la compra de productos, actualizando el sto
 venderProductos: Maneja la venta de productos con una lista de productos a comprar y sus cantidades. Este método incluye validaciones como el límite de productos por venta y unidades por producto. Calcula el precio de venta aplicando descuentos y ajusta el saldo en caja según el total de la venta. También actualiza el stock y la disponibilidad de los productos vendidos.
 
 obtenerComestiblesConMenorDescuento: Filtra y retorna una lista de productos comestibles (envasados y bebidas) que no son importados y cuyo descuento es menor a un porcentaje dado. Los productos se ordenan por precio y las descripciones se convierten a mayúsculas.
-
-La elección de ArrayList para las listas de productos permite una gestión flexible y eficiente del stock. El uso de stream() mejora la legibilidad del código al realizar operaciones como filtrado y ordenación. La clasificación de productos y la verificación de stock y saldo en caja aseguran una gestión precisa y organizada. En futuras versiones, se recomienda delegar algunas responsabilidades a clases o interfaces adicionales para mejorar la modularidad y facilitar futuras extensiones del sistema.
