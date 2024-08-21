@@ -1,219 +1,354 @@
 package TP1;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Objects;
+import java.util.Set;
 
-/* Esta clase "Tienda" está asumiendo muchas responsabilidades en su implementación actual.
- Soy consciente de que esto puede dificultar la escalabilidad y el mantenimiento del código.
- Una mejora sería delegar ciertas funcionalidades a clases o interfaces específicas,
- como crear una interfaz para comestibles o dividir la lógica de ventas en una clase separada.
- Esto permitiría una estructura más modular y flexible, facilitando futuras modificaciones. */
+/*
+    En este diseño, opté por mantener la mayor parte de la lógica en la clase "Tienda" para asegurar
+    una gestión centralizada de las operaciones, lo que facilita el acceso a métodos clave en un solo
+    lugar. Soy consciente de que esto recargó la clase con demasiadas responsabilidades, lo que va en
+    contra del principio de responsabilidad única (SRP). En un futuro, sería ideal delegar algunas
+    tareas en clases auxiliares o incluso implementar interfaces, especialmente para productos como
+    "Comestibles", lo cual no se implementó en esta versión debido a una interpretación inicial en la
+    que asumí que todos los productos envasados eran comestibles, dado que los productos de limpieza
+    ya contaban con su propia clase. Reconozco que esta fue una interpretación ambigua, y que la
+    creación de una interfaz específica para "Comestibles" podría haber sido una solución más adecuada
+    para manejar esta diferenciación de manera más explícita y escalable.
+*/
 
-public class Tienda {
-    private String nombre;
-    private int maximoStock;
-    private double saldoEnCaja;
-    private List<Producto> productosEnStock;
-    private List<Producto> listaEnvasados;
-    private List<Producto> listaBebidas;
-    private List<Producto> listaLimpieza;
+//====Clase padre Producto====
+abstract class Producto {
+    protected String id;
+    protected String descripcion;
+    protected int stock;
+    protected double precioPorUnidad;
+    protected double porcentajeGanancia;
+    protected double descuento;
+    protected boolean disponible;
 
-    public Tienda(String nombre, int maximoStock, double saldoEnCaja) {
-        this.nombre = nombre;
-        this.maximoStock = maximoStock;
-        this.saldoEnCaja = saldoEnCaja;
-        this.productosEnStock = new ArrayList<>();
-        this.listaEnvasados = new ArrayList<>();
-        this.listaBebidas = new ArrayList<>();
-        this.listaLimpieza = new ArrayList<>();
+    public Producto(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia, double descuento) {
+        this.descripcion = Objects.requireNonNull(descripcion, "Descripción no puede ser nula");
+        this.stock = stock;
+        this.precioPorUnidad = precioPorUnidad;
+        this.porcentajeGanancia = porcentajeGanancia;
+        setDescuento(descuento);
+        this.disponible = true;
+    }
+
+    // Getters y Setters
+    public String getId() {
+        return id;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
+    }
+
+    public double getPrecioPorUnidad() {
+        return precioPorUnidad;
+    }
+
+    public double getPorcentajeGanancia() {
+        return porcentajeGanancia;
+    }
+
+    public double getDescuento() {
+        return descuento;
+    }
+
+    public void setDescuento(double descuento) {
+        this.descuento = descuento;
+    }
+
+    public boolean isDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
     }
 
     @Override
     public String toString() {
         return String.format(
-                "===== Tienda =====\n" +
-                        "Nombre: %s\n" +
-                        "Máximo Stock Permitido: %d productos\n" +
-                        "Saldo en Caja: $%.2f\n" +
-                        "==================\n",
-                nombre, maximoStock, saldoEnCaja
+                "-----------------------------\n" +
+                        "ID: %s\n" +
+                        "Descripción: %s\n" +
+                        "Stock: %d\n" +
+                        "Precio: %.2f\n" +
+                        "Ganancia: %.2f%%\n" +
+                        "Descuento: %.2f%%\n" +
+                        "Disponible: %b\n" +
+                        "-----------------------------",
+                id, descripcion, stock, precioPorUnidad, porcentajeGanancia, descuento, disponible
         );
+    }
+}
+
+//====SubClase Envasados====
+class Envasado extends Producto {
+    private static int contador = 0;
+    private String tipoEnvase;
+    private boolean esImportado;
+    private int calorias;
+    private Date fechaVencimiento;
+    private static final double MAX_DESCUENTO = 15;
+
+    public Envasado(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia,
+                    String tipoEnvase, boolean esImportado, int calorias, String fechaVencimiento, double descuento) {
+        super(descripcion, stock, precioPorUnidad, porcentajeGanancia, descuento);
+        validarDescuento(descuento);
+        validarGanancia();
+        this.tipoEnvase = Objects.requireNonNull(tipoEnvase, "Tipo de envase no puede ser nulo");
+        this.esImportado = esImportado;
+        this.calorias = calorias;
+        this.fechaVencimiento = convertirFecha(fechaVencimiento);
+        this.id = generarId();
+    }
+
+    private void validarDescuento(double descuento) {
+        if (descuento > MAX_DESCUENTO) {
+            throw new IllegalArgumentException("El descuento para productos envasados no puede superar el 15%.");
+        }
+    }
+
+    private void validarGanancia() {
+        if (getPorcentajeGanancia() > 20) {
+            throw new IllegalArgumentException("El porcentaje de ganancia para productos envasados no puede superar el 20%.");
+        }
+    }
+
+    private String generarId() {
+        contador++;
+        return String.format("AB%03d", contador);
+    }
+
+    private Date convertirFecha(String fechaStr) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/yyyy");
+        try {
+            return sdf.parse(fechaStr);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("Formato de fecha inválido. Debe ser MM/yyyy.");
+        }
     }
 
     // Getters y Setters
-    public String getNombre() {
-        return nombre;
+    public String getTipoEnvase() {
+        return tipoEnvase;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setTipoEnvase(String tipoEnvase) {
+        this.tipoEnvase = tipoEnvase;
     }
 
-    public int getMaximoStock() {
-        return maximoStock;
+    public boolean isEsImportado() {
+        return esImportado;
     }
 
-    public void setMaximoStock(int maximoStock) {
-        this.maximoStock = maximoStock;
+    public void setEsImportado(boolean esImportado) {
+        this.esImportado = esImportado;
     }
 
-    public double getSaldoEnCaja() {
-        return saldoEnCaja;
+    public int getCalorias() {
+        return calorias;
     }
 
-    public void setSaldoEnCaja(double saldoEnCaja) {
-        this.saldoEnCaja = saldoEnCaja;
+    public void setCalorias(int calorias) {
+        this.calorias = calorias;
     }
 
-    public List<Producto> getProductosEnStock() {
-        return productosEnStock;
+    public Date getFechaVencimiento() {
+        return fechaVencimiento;
     }
 
-    // Método para comprar un item y añadirlo al stock
-    public void comprarProducto(Producto item, int cantidadAComprar) {
-        boolean productoExistente = false;
-
-        // Verificar si el producto ya está en stock
-        for (Producto productoEnStock : productosEnStock) {
-            if (productoEnStock.getDescripcion().equals(item.getDescripcion())) {
-                productoExistente = true;
-                int nuevoStock = productoEnStock.getStock() + cantidadAComprar;
-
-                // Verificar si el nuevo stock excede el máximo permitido
-                if (nuevoStock > maximoStock) {
-                    System.out.println("No se puede agregar más de este producto porque se excede el stock máximo permitido.");
-                    return;
-                }
-
-                // Verificar si hay suficiente saldo en caja
-                double costoTotal = cantidadAComprar * item.getPrecioPorUnidad();
-                if (saldoEnCaja < costoTotal) {
-                    System.out.println("El producto no podrá ser agregado a la tienda por saldo insuficiente en la caja.");
-                    return;
-                }
-
-                // Actualizar el stock y el saldo en caja
-                productoEnStock.setStock(nuevoStock);
-                saldoEnCaja -= costoTotal;
-                System.out.println("Producto existente actualizado con éxito.");
-                return;
-            }
-        }
-
-        // Si el producto no existe en el stock, agregarlo como nuevo
-        int cantidadActualEnStock = productosEnStock.stream().mapToInt(Producto::getStock).sum();
-
-        // Verificar si agregar nuevos productos excede el máximo stock
-        if (cantidadActualEnStock + cantidadAComprar > maximoStock) {
-            System.out.println("No se pueden agregar nuevos productos a la tienda ya que se alcanzó el máximo de stock.");
-            return;
-        }
-
-        // Verificar si hay suficiente saldo en caja
-        double costoTotal = cantidadAComprar * item.getPrecioPorUnidad();
-        if (saldoEnCaja < costoTotal) {
-            System.out.println("El producto no podrá ser agregado a la tienda por saldo insuficiente en la caja.");
-            return;
-        }
-
-        // Clasificar y agregar el producto
-        if (item instanceof Envasado) {
-            listaEnvasados.add(item);
-        } else if (item instanceof Bebida) {
-            listaBebidas.add(item);
-        } else if (item instanceof Limpieza) {
-            listaLimpieza.add(item);
-        }
-
-        // Agregar el producto al stock y descontar el saldo
-        item.setStock(cantidadAComprar);
-        productosEnStock.add(item);
-        saldoEnCaja -= costoTotal;
-        System.out.println("Producto agregado con éxito.");
+    public void setFechaVencimiento(String fechaVencimiento) {
+        this.fechaVencimiento = convertirFecha(fechaVencimiento);
     }
 
-    // Método para vender productos
-    public void venderProductos(List<Producto> productosAComprar, List<Integer> cantidades) {
-        if (productosAComprar.size() > 3) {
-            System.out.println("No se pueden incluir más de 3 productos en una venta.");
-            return;
-        }
+    @Override
+    public String toString() {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/yyyy");
+        return String.format(
+                "%s\n" +
+                        "Tipo de Envase: %s\n" +
+                        "Importado: %b\n" +
+                        "Calorías: %d\n" +
+                        "Fecha de Vencimiento: %s\n" +
+                        "-----------------------------",
+                super.toString(), tipoEnvase, esImportado, calorias, sdf.format(fechaVencimiento)
+        );
+    }
+}
 
-        double totalVenta = 0;
-        boolean stockMenorAlSolicitado = false;
-        boolean productoNoDisponible = false;
+//====SubClase Bebidas====
+class Bebida extends Producto {
+    private static int contador = 0;
+    private double graduacionAlcoholica;
+    private boolean esImportado;
+    private double calorias;
+    private Date fechaVencimiento;
+    private static final double MAX_DESCUENTO = 10;
 
-        System.out.println("==========================================");
-        System.out.println("               DETALLE DE VENTA           ");
-        System.out.println("==========================================");
-        for (int i = 0; i < productosAComprar.size(); i++) {
-            Producto producto = productosAComprar.get(i);
-            int cantidad = cantidades.get(i);
+    public Bebida(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia,
+                  double graduacionAlcoholica, boolean esImportado, double calorias, String fechaVencimiento, double descuento) {
+        super(descripcion, stock, precioPorUnidad, porcentajeGanancia, descuento);
+        validarDescuento(descuento);
+        validarGanancia();
+        this.graduacionAlcoholica = graduacionAlcoholica;
+        this.esImportado = esImportado;
+        this.calorias = ajustarCalorias(calorias);
+        this.fechaVencimiento = convertirFecha(fechaVencimiento);
+        this.id = generarId();
+    }
 
-            if (cantidad > 12) {
-                System.out.println("No se pueden vender más de 12 unidades de un mismo producto.");
-                continue;
-            }
-
-            if (!producto.isDisponible()) {
-                System.out.printf("El producto %s %s no se encuentra disponible.%n", producto.getId(), producto.getDescripcion());
-                productoNoDisponible = true;
-                continue;
-            }
-
-            if (producto.getStock() < cantidad) {
-                System.out.printf("Hay productos con stock disponible menor al solicitado para %s %s. Solo se venderán %d unidades.%n",
-                        producto.getId(), producto.getDescripcion(), producto.getStock());
-                cantidad = producto.getStock();
-                stockMenorAlSolicitado = true;
-                producto.setDisponible(false); // Si no hay stock, lo hacemos no disponible
-            }
-
-            // Calcular el precio de venta base
-            double precioVentaBase = producto.getPrecioPorUnidad() * (1 + producto.getPorcentajeGanancia() / 100);
-
-            // Aplicar descuento adicional del 12% si el producto es importado
-            double precioVentaFinal = precioVentaBase;
-            if (producto instanceof Envasado) {
-                Envasado envasado = (Envasado) producto;
-                if (envasado.isEsImportado()) {
-                    precioVentaFinal *= 1.12; // Aplicar el 12% extra al precio base
-                }
-            } else if (producto instanceof Bebida) {
-                Bebida bebida = (Bebida) producto;
-                if (bebida.isEsImportado()) {
-                    precioVentaFinal *= 1.12; // Aplicar el 12% extra al precio base
-                }
-            }
-
-            double subtotal = precioVentaFinal * cantidad;
-            totalVenta += subtotal;
-
-            // Descontar la cantidad vendida del stock
-            producto.setStock(producto.getStock() - cantidad);
-
-            System.out.printf("%s %s %d x $%.2f = $%.2f%n", producto.getId(), producto.getDescripcion(), cantidad, precioVentaFinal, subtotal);
-            System.out.println("-------------------------------------");
-
-            // Verificar si después de la venta ya no hay más stock y cambiar disponibilidad
-            if (producto.getStock() == 0) {
-                producto.setDisponible(false);
-            }
-        }
-
-        // Actualizar el saldo en caja con el total de la venta
-        saldoEnCaja += totalVenta;
-        System.out.println("-------------------------------------");
-        System.out.printf("TOTAL VENTA: $%.2f%n", totalVenta);
-
-        if (stockMenorAlSolicitado) {
-            System.out.println("Hay productos con stock disponible menor al solicitado.");
-        }
-
-        if (productoNoDisponible) {
-            System.out.println("Uno o más productos no se encuentran disponibles y no se incluyeron en la venta.");
+    private void validarDescuento(double descuento) {
+        if (descuento > MAX_DESCUENTO) {
+            throw new IllegalArgumentException("El descuento para bebidas no puede superar el 10%.");
         }
     }
 
+    private void validarGanancia() {
+        if (getPorcentajeGanancia() > 20) {
+            throw new IllegalArgumentException("El porcentaje de ganancia para bebidas no puede superar el 20%.");
+        }
+    }
 
+    private String generarId() {
+        contador++;
+        return String.format("AC%03d", contador);
+    }
+
+    private double ajustarCalorias(double caloriasIngresadas) {
+        if (graduacionAlcoholica <= 2) {
+            return caloriasIngresadas;
+        } else if (graduacionAlcoholica <= 4.5) {
+            return caloriasIngresadas * 1.25;
+        } else {
+            return caloriasIngresadas * 1.5;
+        }
+    }
+
+    private Date convertirFecha(String fechaStr) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/yyyy");
+        try {
+            return sdf.parse(fechaStr);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("Formato de fecha inválido. Debe ser MM/yyyy.");
+        }
+    }
+
+    // Getters y Setters
+    public double getGraduacionAlcoholica() {
+        return graduacionAlcoholica;
+    }
+
+    public void setGraduacionAlcoholica(double graduacionAlcoholica) {
+        this.graduacionAlcoholica = graduacionAlcoholica;
+        this.calorias = ajustarCalorias(this.calorias);
+    }
+
+    public boolean isEsImportado() {
+        return esImportado;
+    }
+
+    public void setEsImportado(boolean esImportado) {
+        this.esImportado = esImportado;
+    }
+
+    public double getCalorias() {
+        return calorias;
+    }
+
+    public void setCalorias(double calorias) {
+        this.calorias = ajustarCalorias(calorias);
+    }
+
+    public Date getFechaVencimiento() {
+        return fechaVencimiento;
+    }
+
+    public void setFechaVencimiento(String fechaVencimiento) {
+        this.fechaVencimiento = convertirFecha(fechaVencimiento);
+    }
+
+    @Override
+    public String toString() {
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/yyyy");
+        return String.format(
+                "%s\n" +
+                        "Graduación Alcohólica: %.2f%%\n" +
+                        "Importado: %b\n" +
+                        "Calorías: %.2f\n" +
+                        "Fecha de Vencimiento: %s\n" +
+                        "-----------------------------",
+                super.toString(), graduacionAlcoholica, esImportado, calorias, sdf.format(fechaVencimiento)
+        );
+    }
+}
+
+//====SubClase Limpieza====
+class Limpieza extends Producto {
+    private static int contador = 0;
+    private String tipoAplicacion;
+    private static final Set<String> TIPOS_VALIDOS = Set.of("COCINA", "BAÑO", "ROPA", "MULTIUSO");
+    private static final double MAX_DESCUENTO = 20;
+
+    public Limpieza(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia,
+                    String tipoAplicacion, double descuento) {
+        super(descripcion, stock, precioPorUnidad, porcentajeGanancia, descuento);
+        setTipoAplicacion(tipoAplicacion);
+        validarDescuento(descuento);
+        validarGanancia();
+        this.id = generarId();
+    }
+
+    private void validarDescuento(double descuento) {
+        if (descuento > MAX_DESCUENTO) {
+            throw new IllegalArgumentException("El descuento para productos de limpieza no puede superar el 20%.");
+        }
+    }
+
+    private void validarGanancia() {
+        if (getPorcentajeGanancia() > 20) {
+            throw new IllegalArgumentException("El porcentaje de ganancia para productos de limpieza no puede superar el 20%.");
+        }
+    }
+
+    private String generarId() {
+        contador++;
+        return String.format("LI%03d", contador);
+    }
+
+    // Getters y Setters
+    public String getTipoAplicacion() {
+        return tipoAplicacion;
+    }
+
+    public void setTipoAplicacion(String tipoAplicacion) {
+        if (!TIPOS_VALIDOS.contains(tipoAplicacion.toUpperCase())) {
+            throw new IllegalArgumentException("Tipo de aplicación inválido. Debe ser uno de los siguientes: COCINA, BAÑO, ROPA, MULTIUSO.");
+        }
+        this.tipoAplicacion = tipoAplicacion;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "%s\n" +
+                        "Tipo de Aplicación: %s\n" +
+                        "-----------------------------",
+                super.toString(), tipoAplicacion
+        );
+    }
 }
