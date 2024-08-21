@@ -6,6 +6,19 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
 
+/*
+    En este diseño, opté por mantener la mayor parte de la lógica en la clase "Tienda" para asegurar
+    una gestión centralizada de las operaciones, lo que facilita el acceso a métodos clave en un solo
+    lugar. Soy consciente de que esto recargó la clase con demasiadas responsabilidades, lo que va en
+    contra del principio de responsabilidad única (SRP). En un futuro, sería ideal delegar algunas
+    tareas en clases auxiliares o incluso implementar interfaces, especialmente para productos como
+    "Comestibles", lo cual no se implementó en esta versión debido a una interpretación inicial en la
+    que asumí que todos los productos envasados eran comestibles, dado que los productos de limpieza
+    ya contaban con su propia clase. Reconozco que esta fue una interpretación ambigua, y que la
+    creación de una interfaz específica para "Comestibles" podría haber sido una solución más adecuada
+    para manejar esta diferenciación de manera más explícita y escalable.
+*/
+
 //====Clase padre Producto====
 abstract class Producto {
     protected String id;
@@ -13,13 +26,15 @@ abstract class Producto {
     protected int stock;
     protected double precioPorUnidad;
     protected double porcentajeGanancia;
+    protected double descuento;
     protected boolean disponible;
 
-    public Producto(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia) {
+    public Producto(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia, double descuento) {
         this.descripcion = Objects.requireNonNull(descripcion, "Descripción no puede ser nula");
         this.stock = stock;
         this.precioPorUnidad = precioPorUnidad;
         this.porcentajeGanancia = porcentajeGanancia;
+        setDescuento(descuento);
         this.disponible = true;
     }
 
@@ -48,6 +63,14 @@ abstract class Producto {
         return porcentajeGanancia;
     }
 
+    public double getDescuento() {
+        return descuento;
+    }
+
+    public void setDescuento(double descuento) {
+        this.descuento = descuento;
+    }
+
     public boolean isDisponible() {
         return disponible;
     }
@@ -65,9 +88,10 @@ abstract class Producto {
                         "Stock: %d\n" +
                         "Precio: %.2f\n" +
                         "Ganancia: %.2f%%\n" +
+                        "Descuento: %.2f%%\n" +
                         "Disponible: %b\n" +
                         "-----------------------------",
-                id, descripcion, stock, precioPorUnidad, porcentajeGanancia, disponible
+                id, descripcion, stock, precioPorUnidad, porcentajeGanancia, descuento, disponible
         );
     }
 }
@@ -79,16 +103,24 @@ class Envasado extends Producto {
     private boolean esImportado;
     private int calorias;
     private Date fechaVencimiento;
+    private static final double MAX_DESCUENTO = 15;
 
     public Envasado(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia,
-                    String tipoEnvase, boolean esImportado, int calorias, String fechaVencimiento) {
-        super(descripcion, stock, precioPorUnidad, porcentajeGanancia);
+                    String tipoEnvase, boolean esImportado, int calorias, String fechaVencimiento, double descuento) {
+        super(descripcion, stock, precioPorUnidad, porcentajeGanancia, descuento);
+        validarDescuento(descuento);
         validarGanancia();
         this.tipoEnvase = Objects.requireNonNull(tipoEnvase, "Tipo de envase no puede ser nulo");
         this.esImportado = esImportado;
         this.calorias = calorias;
         this.fechaVencimiento = convertirFecha(fechaVencimiento);
         this.id = generarId();
+    }
+
+    private void validarDescuento(double descuento) {
+        if (descuento > MAX_DESCUENTO) {
+            throw new IllegalArgumentException("El descuento para productos envasados no puede superar el 15%.");
+        }
     }
 
     private void validarGanancia() {
@@ -166,16 +198,24 @@ class Bebida extends Producto {
     private boolean esImportado;
     private double calorias;
     private Date fechaVencimiento;
+    private static final double MAX_DESCUENTO = 10;
 
     public Bebida(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia,
-                  double graduacionAlcoholica, boolean esImportado, double calorias, String fechaVencimiento) {
-        super(descripcion, stock, precioPorUnidad, porcentajeGanancia);
+                  double graduacionAlcoholica, boolean esImportado, double calorias, String fechaVencimiento, double descuento) {
+        super(descripcion, stock, precioPorUnidad, porcentajeGanancia, descuento);
+        validarDescuento(descuento);
         validarGanancia();
         this.graduacionAlcoholica = graduacionAlcoholica;
         this.esImportado = esImportado;
         this.calorias = ajustarCalorias(calorias);
         this.fechaVencimiento = convertirFecha(fechaVencimiento);
         this.id = generarId();
+    }
+
+    private void validarDescuento(double descuento) {
+        if (descuento > MAX_DESCUENTO) {
+            throw new IllegalArgumentException("El descuento para bebidas no puede superar el 10%.");
+        }
     }
 
     private void validarGanancia() {
@@ -257,33 +297,37 @@ class Bebida extends Producto {
     }
 }
 
-//====SubClase Productos de Limpieza====
+//====SubClase Limpieza====
 class Limpieza extends Producto {
     private static int contador = 0;
     private String tipoAplicacion;
     private static final Set<String> TIPOS_VALIDOS = Set.of("COCINA", "BAÑO", "ROPA", "MULTIUSO");
+    private static final double MAX_DESCUENTO = 20;
 
-    public Limpieza(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia, String tipoAplicacion) {
-        super(descripcion, stock, precioPorUnidad, porcentajeGanancia);
+    public Limpieza(String descripcion, int stock, double precioPorUnidad, double porcentajeGanancia,
+                    String tipoAplicacion, double descuento) {
+        super(descripcion, stock, precioPorUnidad, porcentajeGanancia, descuento);
         setTipoAplicacion(tipoAplicacion);
+        validarDescuento(descuento);
         validarGanancia();
         this.id = generarId();
     }
 
-    private void validarGanancia() {
-        if (TIPOS_VALIDOS.contains(tipoAplicacion)) {
-            if (tipoAplicacion.equals("COCINA") || tipoAplicacion.equals("MULTIUSO")) {
-                return;
-            }
+    private void validarDescuento(double descuento) {
+        if (descuento > MAX_DESCUENTO) {
+            throw new IllegalArgumentException("El descuento para productos de limpieza no puede superar el 20%.");
         }
-        if (getPorcentajeGanancia() < 10 || getPorcentajeGanancia() > 25) {
-            throw new IllegalArgumentException("El porcentaje de ganancia para productos de limpieza debe estar entre el 10% y el 25%, salvo que sean de tipo COCINA o MULTIUSO.");
+    }
+
+    private void validarGanancia() {
+        if (getPorcentajeGanancia() > 20) {
+            throw new IllegalArgumentException("El porcentaje de ganancia para productos de limpieza no puede superar el 20%.");
         }
     }
 
     private String generarId() {
         contador++;
-        return String.format("AZ%03d", contador);
+        return String.format("LI%03d", contador);
     }
 
     // Getters y Setters
@@ -292,11 +336,10 @@ class Limpieza extends Producto {
     }
 
     public void setTipoAplicacion(String tipoAplicacion) {
-        if (TIPOS_VALIDOS.contains(tipoAplicacion.toUpperCase())) {
-            this.tipoAplicacion = tipoAplicacion.toUpperCase();
-        } else {
-            throw new IllegalArgumentException("Tipo de aplicación no válido. Debe ser COCINA, BAÑO, ROPA o MULTIUSO.");
+        if (!TIPOS_VALIDOS.contains(tipoAplicacion.toUpperCase())) {
+            throw new IllegalArgumentException("Tipo de aplicación inválido. Debe ser uno de los siguientes: COCINA, BAÑO, ROPA, MULTIUSO.");
         }
+        this.tipoAplicacion = tipoAplicacion;
     }
 
     @Override
@@ -309,8 +352,3 @@ class Limpieza extends Producto {
         );
     }
 }
-
-    }
-}
-
-
