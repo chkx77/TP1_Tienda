@@ -3,8 +3,9 @@ package TP1;
 import java.util.Arrays;
 import java.util.List;
 
-public class Main {
-    public static void main(String[] args) {
+class testTienda{
+    public class Main {
+        public static void main(String[] args) {
         Tienda tiendaYermo = new Tienda("Tienda del Yermo", 100, 5000.00);
 
         Envasado palitosIguana = new Envasado("Palitos de iguana", 0, 500.00,
@@ -30,8 +31,8 @@ public class Main {
 //        System.out.println(tiendaYermo.obtenerComestiblesConMenorDescuento(7));
 
         // Caso 1: Compra y venta de un producto envasado
-        /*
-        System.out.println("=== Caso 1: Compra y venta de raciones ===");
+
+        /*System.out.println("=== Caso 1: Compra y venta de raciones ===");
         System.out.println("Estado inicial de la tienda:");
         System.out.println(tiendaYermo);
 
@@ -51,7 +52,6 @@ public class Main {
         System.out.println(raciones);
         System.out.println("==========================================");
         */
-
         // Caso 2: Compra y venta de una bebida importada
 
         /*System.out.println("=== Caso 2: Compra y venta de Nuka-Cola Quantum ===");
@@ -151,4 +151,5 @@ public class Main {
         System.out.println(tiendaYermo.obtenerComestiblesConMenorDescuento(10));
 
     }
+}
 }
