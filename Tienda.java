@@ -3,6 +3,12 @@ package TP1;
 import java.util.ArrayList;
 import java.util.List;
 
+/* Esta clase "Tienda" está asumiendo muchas responsabilidades en su implementación actual.
+ Soy consciente de que esto puede dificultar la escalabilidad y el mantenimiento del código.
+ Una mejora sería delegar ciertas funcionalidades a clases o interfaces específicas,
+ como crear una interfaz para comestibles o dividir la lógica de ventas en una clase separada.
+ Esto permitiría una estructura más modular y flexible, facilitando futuras modificaciones. */
+
 public class Tienda {
     private String nombre;
     private int maximoStock;
@@ -163,14 +169,30 @@ public class Tienda {
                 producto.setDisponible(false); // Si no hay stock, lo hacemos no disponible
             }
 
-            double precioVenta = producto.getPrecioPorUnidad() * (1 + producto.getPorcentajeGanancia() / 100);
-            double subtotal = precioVenta * cantidad;
+            // Calcular el precio de venta base
+            double precioVentaBase = producto.getPrecioPorUnidad() * (1 + producto.getPorcentajeGanancia() / 100);
+
+            // Aplicar descuento adicional del 12% si el producto es importado
+            double precioVentaFinal = precioVentaBase;
+            if (producto instanceof Envasado) {
+                Envasado envasado = (Envasado) producto;
+                if (envasado.isEsImportado()) {
+                    precioVentaFinal *= 1.12; // Aplicar el 12% extra al precio base
+                }
+            } else if (producto instanceof Bebida) {
+                Bebida bebida = (Bebida) producto;
+                if (bebida.isEsImportado()) {
+                    precioVentaFinal *= 1.12; // Aplicar el 12% extra al precio base
+                }
+            }
+
+            double subtotal = precioVentaFinal * cantidad;
             totalVenta += subtotal;
 
             // Descontar la cantidad vendida del stock
             producto.setStock(producto.getStock() - cantidad);
 
-            System.out.printf("%s %s %d x $%.2f = $%.2f%n", producto.getId(), producto.getDescripcion(), cantidad, precioVenta, subtotal);
+            System.out.printf("%s %s %d x $%.2f = $%.2f%n", producto.getId(), producto.getDescripcion(), cantidad, precioVentaFinal, subtotal);
             System.out.println("-------------------------------------");
 
             // Verificar si después de la venta ya no hay más stock y cambiar disponibilidad
@@ -192,4 +214,6 @@ public class Tienda {
             System.out.println("Uno o más productos no se encuentran disponibles y no se incluyeron en la venta.");
         }
     }
+
+
 }
